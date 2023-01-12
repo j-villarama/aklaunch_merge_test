@@ -14,42 +14,42 @@ For all matching emails that exist ONCE in EACH list, return first_name, last_na
 
 */
 
-
 if (!file_exists('email_names.json')) {
-    echo "Missing email_names.json";
+    echo 'Missing email_names.json';
     return;
 }
 
 if (!file_exists('email_numbers.json')) {
-    echo "Missing email_numbers.json";
+    echo 'Missing email_numbers.json';
     return;
 }
 
+$namesList = json_decode(file_get_contents('email_names.json'), true);
+$numbersList = json_decode(file_get_contents('email_numbers.json'), true);
 
-$names_list = json_decode(file_get_contents('email_names.json'), true); 
-$numbers_list = json_decode(file_get_contents('email_numbers.json'), true);  
+$matches = array_filter($namesList, function ($nameData) use ($numbersList) {
+    $matchCount = 0;
+    $ccNumber = '';
 
-$matches = [];
-
-
-foreach ($numbers_list as $number_data) {    
-    $filteredArray = array_filter($names_list, function ($obj) use ($number_data) {
-        return $obj["email"] === $number_data["email"];
-    });
-    
-    if (count($filteredArray) > 0) {
-        $keys = array_keys($filteredArray);
-
-        foreach ($keys as $key) {
-            $matches[] = [
-                'first_name' => $filteredArray[$key]["first_name"],
-                'last_name' => $filteredArray[$key]["last_name"],
-                'cc_number' => $number_data['cc_number'],
-                'email' => $number_data['email']
-            ];;
+    foreach ($numbersList as $numberData) {
+        if ($nameData['email'] === $numberData['email']) {
+            $ccNumber = $numberData['cc_number'];
+            $matchCount++;
         }
     }
-}
+
+    if ($matchCount === 1) {
+        $match = new stdClass();
+        $match->first_name = $nameData['first_name'];
+        $match->last_name = $nameData['last_name'];
+        $match->email = $nameData['email'];
+        $match->cc_number = $ccNumber;
+
+        return $match;
+    }
+});
 
 $output_json = json_encode($matches, JSON_PRETTY_PRINT);
 file_put_contents('output.json', $output_json);
+
+?>
