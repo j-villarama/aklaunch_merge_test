@@ -27,7 +27,9 @@ if (!file_exists('email_numbers.json')) {
 $namesList = json_decode(file_get_contents('email_names.json'), true);
 $numbersList = json_decode(file_get_contents('email_numbers.json'), true);
 
-$matches = array_filter($namesList, function ($nameData) use ($numbersList) {
+$matches = [];
+
+array_filter($namesList, function ($nameData) use ($numbersList, &$matches) {
     $matchCount = 0;
     $ccNumber = '';
 
@@ -38,18 +40,41 @@ $matches = array_filter($namesList, function ($nameData) use ($numbersList) {
         }
     }
 
-    if ($matchCount === 1) {
-        $match = new stdClass();
-        $match->first_name = $nameData['first_name'];
-        $match->last_name = $nameData['last_name'];
-        $match->email = $nameData['email'];
-        $match->cc_number = $ccNumber;
 
-        return $match;
+    if ($matchCount === 1) {
+        $matches[] = [
+            'first_name' => $nameData['first_name'],
+            'last_name' =>  $nameData['last_name'],
+            'cc_number' => $ccNumber,
+            'email' => $nameData['email']
+        ];
     }
 });
 
-$output_json = json_encode($matches, JSON_PRETTY_PRINT);
+//Second collision check
+$secondMatch = [];
+
+array_filter($matches, function ($matchedData) use ($namesList, &$secondMatch) {
+    $matchCount = 0;
+
+    foreach ($namesList as $numberData) {
+        if ($matchedData['email'] === $numberData['email']) {
+            $matchCount++;
+        }
+    }
+
+
+    if ($matchCount <= 1) {
+        $secondMatch[] = [
+            'first_name' => $matchedData['first_name'],
+            'last_name' =>  $matchedData['last_name'],
+            'cc_number' => $matchedData['cc_number'],
+            'email' => $matchedData['email']
+        ];
+    }
+});
+
+$output_json = json_encode($secondMatch, JSON_PRETTY_PRINT);
 file_put_contents('output.json', $output_json);
 
 ?>

@@ -1,26 +1,14 @@
-{
-    "19": {
-        "id": 20,
+[
+    {
         "first_name": "Blaire",
         "last_name": "Paddock",
+        "cc_number": "337941627942922",
         "email": "bpaddockj@hibu.com"
     },
-    "28": {
-        "id": 29,
+    {
         "first_name": "Sigismondo",
         "last_name": "Fleckney",
+        "cc_number": "6396567590736564",
         "email": "egoldenofireland29@time.com"
-    },
-    "160": {
-        "id": 161,
-        "first_name": "Antoni",
-        "last_name": "Norsworthy",
-        "email": "anorsworthy4g@myspace.com"
-    },
-    "174": {
-        "id": 175,
-        "first_name": "Paulette",
-        "last_name": "Janczak",
-        "email": "anorsworthy4g@myspace.com"
     }
-}
+]
