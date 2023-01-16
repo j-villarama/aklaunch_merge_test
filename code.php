@@ -13,68 +13,51 @@ For all matching emails that exist ONCE in EACH list, return first_name, last_na
 
 
 */
-
-if (!file_exists('email_names.json')) {
-    echo 'Missing email_names.json';
+$start = microtime(true);
+if (!file_exists('email_names_large.json')) {
+    echo 'Missing email_names_large.json';
     return;
 }
 
-if (!file_exists('email_numbers.json')) {
-    echo 'Missing email_numbers.json';
+if (!file_exists('email_numbers_large.json')) {
+    echo 'Missing email_numbers_large.json';
     return;
 }
 
-$namesList = json_decode(file_get_contents('email_names.json'), true);
-$numbersList = json_decode(file_get_contents('email_numbers.json'), true);
+$namesList = json_decode(file_get_contents('email_names_large.json'), true);
+$numbersList = json_decode(file_get_contents('email_numbers_large.json'), true);
 
-$matches = [];
+$list1_emails = array_column($namesList, 'email');
+$list2_emails = array_column($numbersList, 'email');
 
-array_filter($namesList, function ($nameData) use ($numbersList, &$matches) {
-    $matchCount = 0;
-    $ccNumber = '';
+$matching_emails = array_intersect($list1_emails, $list2_emails);
 
-    foreach ($numbersList as $numberData) {
-        if ($nameData['email'] === $numberData['email']) {
-            $ccNumber = $numberData['cc_number'];
-            $matchCount++;
-        }
+
+$list1_email_count = array_count_values($list1_emails);
+$list2_email_count = array_count_values($list2_emails);
+
+$results = array();
+foreach($matching_emails as $email){
+    if($list1_email_count[$email] == 1 && $list2_email_count[$email] == 1){
+            $nameData = array_filter($namesList, function($i) use ($email) {
+                return $i['email'] == $email;
+            });
+            $key = array_keys($nameData)[0];
+            $numberData =  array_filter($numbersList, function($i) use ($email) {
+                return $i['email'] == $email;
+            });
+            $key2 = array_keys($numberData)[0];
+
+            $results[] = array("email" => $email, "first_name" => $nameData[$key]["first_name"], "last_name" => $nameData[$key]["last_name"], "cc_number" => $numberData[$key2]["cc_number"]);
     }
+}
 
+$end = microtime(true);
+$time = $end - $start;
 
-    if ($matchCount === 1) {
-        $matches[] = [
-            'first_name' => $nameData['first_name'],
-            'last_name' =>  $nameData['last_name'],
-            'cc_number' => $ccNumber,
-            'email' => $nameData['email']
-        ];
-    }
-});
-
-//Second collision check
-$secondMatch = [];
-
-array_filter($matches, function ($matchedData) use ($namesList, &$secondMatch) {
-    $matchCount = 0;
-
-    foreach ($namesList as $numberData) {
-        if ($matchedData['email'] === $numberData['email']) {
-            $matchCount++;
-        }
-    }
-
-
-    if ($matchCount <= 1) {
-        $secondMatch[] = [
-            'first_name' => $matchedData['first_name'],
-            'last_name' =>  $matchedData['last_name'],
-            'cc_number' => $matchedData['cc_number'],
-            'email' => $matchedData['email']
-        ];
-    }
-});
-
-$output_json = json_encode($secondMatch, JSON_PRETTY_PRINT);
+echo "Finished execution in " . $time . " seconds";
+$output_json = json_encode($results, JSON_PRETTY_PRINT);
 file_put_contents('output.json', $output_json);
+file_put_contents('matching_emails.csv',join(",\n", $matching_emails));
 
 ?>
